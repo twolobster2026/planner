@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>手账丨Twolobster · 智能工作手账</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f0f4f9;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            padding: 24px 20px;
+            color: #0f172a;
+        }
+
+        .handbook-container {
+            max-width: 1500px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        /* 顶部标题卡片 - 默认橘色主题 */
+        .hero-card {
+            background: linear-gradient(135deg, #ff9a3c 0%, #ff6b6b 100%);
+            border-radius: 48px;
+            padding: 20px 32px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 12px 24px -8px rgba(0,0,0,0.2);
+            transition: background 0.3s ease;
+        }
+        .hero-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .hero-sub {
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        /* AB 并列 */
+        .row-ab {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+            padding: 22px 26px;
+            transition: all 0.2s;
+            border: 1px solid #eef2ff;
+        }
+
+        .calendar-area {
+            flex: 1.3;
+            min-width: 280px;
+        }
+
+        .important-area {
+            flex: 1;
+            min-width: 320px;
+        }
+
+        .todo-area, .habit-area {
+            width: 100%;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 5px solid #3b82f6;
+            padding-left: 18px;
+            letter-spacing: -0.3px;
+        }
+
+        /* 日历头部 */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .month-year-selector {
+            display: flex;
+            gap: 10px;
+            background: #f8fafc;
+            padding: 5px 14px;
+            border-radius: 60px;
+        }
+        .month-year-selector select {
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 40px;
+            padding: 6px 14px;
+            font-weight: 500;
+        }
+        .btn-icon {
+            background: #eef2ff;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .weekday {
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #475569;
+            padding: 6px 0;
+        }
+        .cal-day {
+            aspect-ratio: 1 / 1;
+            background: #fafcff;
+            border-radius: 20px;
+            padding: 6px 4px;
+            cursor: pointer;
+            transition: 0.1s;
+            border: 1px solid #e2edff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .cal-day:hover {
+            background: #eef2ff;
+            transform: scale(0.97);
+        }
+        .day-number {
+            font-size: 0.9rem;
+            font-weight: 700;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 40px;
+            background: white;
+        }
+        .day-number.has-journal {
+            background: #3b82f6;
+            color: white;
+            box-shadow: 0 2px 8px rgba(59,130,246,0.4);
+        }
+        .red-circle-badge {
+            width: 24px;
+            height: 24px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            margin-top: 4px;
+        }
+        .badge-placeholder {
+            height: 24px;
+        }
+
+        /* B区 重要事项 & 天气 */
+        .weather-info {
+            background: linear-gradient(135deg, #eef2ff, #ffffff);
+            padding: 14px 20px;
+            border-radius: 40px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .weather-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .weather-control {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+        .weather-control input {
+            flex: 1;
+            min-width: 120px;
+            padding: 6px 12px;
+            border-radius: 40px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.8rem;
+        }
+        .weather-control button {
+            background: #3b82f6;
+            border: none;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .important-list {
+            max-height: 380px;
+            overflow-y: auto;
+        }
+        .imp-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 12px;
+            margin: 8px 0;
+            background: #ffffff;
+            border-radius: 28px;
+            border: 1px solid #eef2ff;
+        }
+        .imp-item.completed {
+            opacity: 0.65;
+            background: #f1f5f9;
+        }
+        .imp-item.completed .imp-text {
+            text-decoration: line-through;
+            color: #64748b;
+        }
+        .imp-check {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            accent-color: #3b82f6;
+        }
+        .imp-date {
+            font-size: 0.75rem;
+            background: #e9ecef;
+            padding: 5px 12px;
+            border-radius: 40px;
+            min-width: 95px;
+            text-align: center;
+            font-weight: 500;
+        }
+        .imp-text {
+            flex: 1;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .imp-delete {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #94a3b8;
+        }
+        .red-imp {
+            background: #fee2e2;
+            border-left: 5px solid #ef4444;
+        }
+        .green-imp {
+            background: #e6f7ec;
+            border-left: 5px solid #10b981;
+        }
+
+        /* C区 TODO 强化 */
+        .todo-list {
+            margin-top: 18px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .todo-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: #ffffff;
+            padding: 14px 18px;
+            margin: 10px 0;
+            border-radius: 32px;
+            border: 1px solid #e2e8f0;
+        }
+        .todo-check {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+        }
+        .todo-time {
+            font-size: 0.85rem;
+            background: #f1f5f9;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-weight: 600;
+            min-width: 110px;
+        }
+        .todo-text {
+            flex: 1;
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: -0.2px;
+            color: #0f172a;
+        }
+        .todo-item.completed-todo .todo-text {
+            text-decoration: line-through;
+            color: #94a3b8;
+            font-weight: 500;
+            opacity: 0.7;
+        }
+        .todo-item.completed-todo {
+            background: #f8fafc;
+            border-color: #e2edff;
+        }
+        .todo-upgrade {
+            background: #f59e0b;
+            border: none;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .todo-delete {
+            background: #e2e8f0;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+        }
+
+        /* D区 习惯打卡 - 3列网格，手机适配 */
+        .habits-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 20px;
+        }
+        .habit-card {
+            background: #fefefe;
+            border-radius: 32px;
+            padding: 18px;
+            border: 1px solid #eef2ff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+        .habit-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .habit-name {
+            font-weight: 800;
+            font-size: 1.1rem;
+            background: #eef2ff;
+            padding: 5px 14px;
+            border-radius: 40px;
+        }
+        .habit-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .icon-btn {
+            background: #f1f5f9;
+            border: none;
+            border-radius: 30px;
+            padding: 5px 12px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .habit-stats-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 12px 0;
+            font-size: 0.8rem;
+            background: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 28px;
+        }
+        .daily-progress {
+            font-weight: 700;
+            background: #f1f5f9;
+            padding: 8px;
+            border-radius: 28px;
+            text-align: center;
+            margin: 8px 0;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 12px 0;
+        }
+        .month-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin: 14px 0;
+        }
+        .stat-cell {
+            aspect-ratio: 1/1;
+            background: #fee2e2;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #b91c1c;
+            cursor: pointer;
+        }
+        .stat-cell.checked {
+            background: #bbf7d0;
+            color: #15803d;
+        }
+        .year-progress {
+            margin-top: 10px;
+            font-size: 0.7rem;
+            background: #eef2ff;
+            border-radius: 30px;
+            padding: 6px 10px;
+            text-align: center;
+        }
+        .add-habit-panel {
+            margin-top: 28px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            background: #f8fafc;
+            padding: 16px 20px;
+            border-radius: 60px;
+        }
+        .btn-primary {
+            background: #3b82f6;
+            border: none;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-secondary {
+            background: #475569;
+            border: none;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        input, select {
+            border-radius: 40px;
+            border: 1px solid #cbd5e1;
+            padding: 8px 14px;
+            font-size: 0.9rem;
+        }
+        .modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 40px;
+            padding: 28px;
+            width: 360px;
+        }
+        button:active { transform: scale(0.96); }
+
+        /* 底部工具栏 */
+        .footer-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 12px;
+            padding-top: 8px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .copyright {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+        .export-import {
+            display: flex;
+            gap: 12px;
+        }
+        .theme-buttons {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .theme-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        .theme-btn:hover { transform: scale(1.1); }
+
+        /* 手机适配 */
+        @media (max-width: 700px) {
+            body { padding: 16px 12px; }
+            .card { padding: 16px 18px; }
+            .hero-card { padding: 16px 20px; flex-direction: column; align-items: flex-start; gap: 8px; }
+            .hero-title { font-size: 1.3rem; }
+            .hero-sub { font-size: 0.7rem; }
+            .section-title { font-size: 1.2rem; margin-bottom: 12px; }
+            .calendar-grid { gap: 4px; }
+            .cal-day { padding: 2px; }
+            .day-number { width: 28px; height: 28px; font-size: 0.75rem; }
+            .red-circle-badge { width: 18px; height: 18px; margin-top: 2px; }
+            .badge-placeholder { height: 18px; }
+            .weekday { font-size: 0.7rem; }
+            .habits-grid { grid-template-columns: 1fr; gap: 16px; }
+            .todo-item { flex-wrap: wrap; }
+            .todo-time { min-width: auto; }
+            .footer-toolbar { flex-direction: column; align-items: stretch; }
+            .export-import, .theme-buttons { justify-content: center; }
+            .weather-main { flex-direction: column; align-items: flex-start; gap: 6px; }
+        }
+        @media (max-width: 480px) {
+            .month-year-selector select { padding: 4px 8px; font-size: 0.75rem; }
+            .btn-icon { padding: 4px 12px; font-size: 0.7rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="handbook-container">
+    <!-- 顶部标题卡片（已修复闭合标签） -->
+    <div class="hero-card" id="heroCard">
+        <div class="hero-title">
+            手账丨Twolobster
+            <span style="font-size: 0.9rem; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 40px;">工作·生活·习惯</span>
+        </div>
+        <div class="hero-sub">智能日程 | 习惯追踪 | 实时天气</div>
+    </div>
+
+    <!-- AB 并列 -->
+    <div class="row-ab">
+        <!-- A区 日历 -->
+        <div class="card calendar-area">
+            <div class="section-title">📅 手账月历</div>
+            <div class="calendar-header">
+                <div class="month-year-selector">
+                    <select id="yearSelect"></select>
+                    <select id="monthSelect"></select>
+                </div>
+                <button id="todayBtn" class="btn-icon">📌 今日</button>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+            <div style="font-size:12px; margin-top:14px; display:flex; gap:20px;">
+                <span>🔴 红点 = 含关键日程</span>
+                <span>🔵 蓝底数字 = 含当日标注</span>
+            </div>
+        </div>
+
+        <!-- B区 重要事项（含真实天气） -->
+        <div class="card important-area">
+            <div class="section-title">⭐ 待办关键日程</div>
+            <div class="weather-info" id="weatherPanel">
+                <div class="weather-main">
+                    <span id="weatherDate">📅 加载中...</span>
+                    <span id="weatherDetail">🌤️ 获取天气中...</span>
+                </div>
+                <div class="weather-control">
+                    <input type="text" id="cityInput" placeholder="城市名 (留空自动定位)" value="">
+                    <button id="refreshWeatherBtn">🔄 刷新天气</button>
+                </div>
+            </div>
+            <div class="important-list" id="importantList"></div>
+            <div style="display:flex; gap:10px; margin-top:20px; flex-wrap:wrap;">
+                <input type="date" id="newImpDate" value="2026-04-03">
+                <input type="time" id="newImpTime" value="14:00">
+                <input type="text" id="newImpText" placeholder="重要事项..." style="flex:2;">
+                <button id="addImpBtn" class="btn-primary">+ 添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- C区 To Do List -->
+    <div class="card todo-area">
+        <div class="section-title">✅ To Do List</div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:8px;">
+            <input type="date" id="newTodoDate" value="2026-04-03">
+            <input type="time" id="newTodoTime" value="10:00">
+            <input type="text" id="newTodoText" placeholder="计划事项 " style="flex:2;">
+            <button id="addTodoBtn" class="btn-primary">+ 添加</button>
+        </div>
+        <div class="todo-list" id="todoListContainer"></div>
+    </div>
+
+    <!-- D区 习惯打卡 -->
+    <div class="card habit-area">
+        <div class="section-title">🏆 习惯打卡</div>
+        <div id="habitsGrid" class="habits-grid"></div>
+        <div class="add-habit-panel">
+            <input type="text" id="newHabitName" placeholder="习惯名称 (如喝水/早睡)" style="flex:1;">
+            <input type="number" id="newDailyTarget" placeholder="每日目标次数" value="1" style="width:100px;">
+            <input type="text" id="newUnit" placeholder="单位 (杯/次)" value="次" style="width:80px;">
+            <label style="display:flex; align-items:center; gap:5px;"><input type="checkbox" id="enableRemindCheckbox"> 提醒</label>
+            <input type="time" id="newRemindTime" value="09:00" style="width:100px;">
+            <button id="addHabitBtn" class="btn-primary">➕ 创建习惯</button>
+        </div>
+        <p style="font-size:12px; margin-top:14px; color:#4b5563;">💡 打卡说明：每日点击“打卡+1”增加计数，达标后当天格子变绿；可补打卡任意日期；年进度自动统计。</p>
+    </div>
+
+    <!-- 底部：导出导入 + 主题切换 + 版权 -->
+    <div class="footer-toolbar">
+        <div class="copyright">© Twolobster丨2026 手账 · 专注效率 | 数据本地存储</div>
+        <div class="theme-buttons">
+            <span style="font-size:0.8rem;">🎨 主题：</span>
+            <div class="theme-btn" style="background: linear-gradient(135deg, #ff9a3c, #ff6b6b);" data-theme="orange"></div>
+            <div class="theme-btn" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);" data-theme="pink"></div>
+            <div class="theme-btn" style="background: linear-gradient(135deg, #2c3e50, #3498db);" data-theme="grayblue"></div>
+            <div class="theme-btn" style="background: linear-gradient(135deg, #11998e, #38ef7d);" data-theme="mint"></div>
+            <div class="theme-btn" style="background: linear-gradient(135deg, #a18cd1, #fbc2eb);" data-theme="purple"></div>
+        </div>
+        <div class="export-import">
+            <button id="exportDataBtn" class="btn-secondary">📤 导出数据</button>
+            <button id="importDataBtn" class="btn-secondary">📥 导入数据</button>
+            <input type="file" id="importFileInput" accept=".json" style="display: none;">
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- 存储KEY ----------
+    const STORAGE = {
+        important: "handbook_important_v2",
+        todo: "handbook_todo_v2",
+        habits: "handbook_habits_v3",
+        journal: "handbook_journal_",
+        theme: "handbook_theme"
+    };
+
+    // 全局数据
+    let importantItems = [];
+    let todoItems = [];
+    let habits = [];
+    let currentYear = 2026, currentMonth = 4;
+
+    // ---------- 辅助函数 ----------
+    function formatYMD(date) {
+        let y = date.getFullYear();
+        let m = String(date.getMonth() + 1).padStart(2, '0');
+        let d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+    function todayStr() { return formatYMD(new Date()); }
+    function saveAll() {
+        localStorage.setItem(STORAGE.important, JSON.stringify(importantItems));
+        localStorage.setItem(STORAGE.todo, JSON.stringify(todoItems));
+        localStorage.setItem(STORAGE.habits, JSON.stringify(habits));
+    }
+    function loadData() {
+        importantItems = JSON.parse(localStorage.getItem(STORAGE.important) || "[]");
+        todoItems = JSON.parse(localStorage.getItem(STORAGE.todo) || "[]");
+        let savedHabits = localStorage.getItem(STORAGE.habits);
+        if(savedHabits) habits = JSON.parse(savedHabits);
+        else habits = [];
+        if(importantItems.length === 0) {
+            importantItems.push({ id: Date.now()+1, date: "2026-04-03", time: "09:30", text: "线上会议", completed: false });
+            importantItems.push({ id: Date.now()+2, date: "2026-04-05", time: "14:00", text: "方案汇报", completed: false });
+        }
+        if(todoItems.length === 0) {
+            todoItems.push({ id: Date.now()+3, date: "2026-04-03", time: "11:00", text: "方案评审", completed: false });
+            todoItems.push({ id: Date.now()+4, date: "2026-04-04", time: "15:30", text: "项目汇报", completed: false });
+        }
+        if(habits.length === 0) {
+            habits.push({ id: 1001, name: "早睡打卡", dailyTarget: 1, unit: "次", remindEnabled: true, remindTime: "22:30", records: {} });
+            habits.push({ id: 1002, name: "喝水", dailyTarget: 8, unit: "杯", remindEnabled: true, remindTime: "15:00", records: {} });
+            habits.push({ id: 1003, name: "每日阅读", dailyTarget: 1, unit: "次", remindEnabled: false, remindTime: "20:00", records: {} });
+        }
+        saveAll();
+    }
+
+    // 手账检测
+    function hasJournalOnDate(dateStr) {
+        let content = localStorage.getItem(STORAGE.journal + dateStr);
+        return content && content.trim().length > 0;
+    }
+    function hasImportantOnDate(dateStr) {
+        return importantItems.some(i => i.date === dateStr);
+    }
+
+    // 渲染A区日历
+    function renderCalendar() {
+        const firstDay = new Date(currentYear, currentMonth-1, 1);
+        const startWeekday = firstDay.getDay();
+        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+        const grid = document.getElementById("calendarGrid");
+        grid.innerHTML = "";
+        const weekdays = ["日","一","二","三","四","五","六"];
+        weekdays.forEach(d => { let dw = document.createElement("div"); dw.className="weekday"; dw.innerText=d; grid.appendChild(dw); });
+        for(let i=0; i<startWeekday; i++) { let empty = document.createElement("div"); empty.className="cal-day"; empty.style.background="transparent"; empty.style.border="none"; grid.appendChild(empty); }
+        for(let d=1; d<=daysInMonth; d++) {
+            let dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            let hasImportant = hasImportantOnDate(dateStr);
+            let hasJournal = hasJournalOnDate(dateStr);
+            let dayDiv = document.createElement("div");
+            dayDiv.className = "cal-day";
+            let numSpan = document.createElement("div");
+            numSpan.className = `day-number ${hasJournal ? 'has-journal' : ''}`;
+            numSpan.innerText = d;
+            dayDiv.appendChild(numSpan);
+            if(hasImportant) {
+                let redCircle = document.createElement("div");
+                redCircle.className = "red-circle-badge";
+                dayDiv.appendChild(redCircle);
+            } else {
+                let ph = document.createElement("div"); ph.style.height="24px"; dayDiv.appendChild(ph);
+            }
+            dayDiv.addEventListener("click", (e) => { e.stopPropagation(); openJournalModal(dateStr); });
+            grid.appendChild(dayDiv);
+        }
+        // 同步习惯打卡区：使用当前年月
+        renderHabits(currentYear, currentMonth);
+    }
+
+    function openJournalModal(dateStr) {
+        let key = STORAGE.journal + dateStr;
+        let content = localStorage.getItem(key) || "";
+        let modal = document.createElement("div");
+        modal.className = "modal";
+        modal.innerHTML = `<div class="modal-content"><h3>📔 ${dateStr} 当日标注</h3><textarea id="journalText" rows="4" style="width:100%; margin:12px 0; border-radius:20px; padding:10px;">${escapeHtml(content)}</textarea><div style="display:flex; gap:10px; justify-content:flex-end;"><button id="saveJournalBtn" class="btn-primary">保存</button><button id="closeJournalBtn" style="background:#94a3b8; border:none; padding:8px 16px; border-radius:40px;">关闭</button></div></div>`;
+        document.body.appendChild(modal);
+        modal.querySelector("#saveJournalBtn").onclick = () => {
+            let newVal = modal.querySelector("#journalText").value;
+            localStorage.setItem(key, newVal);
+            renderCalendar();
+            modal.remove();
+        };
+        modal.querySelector("#closeJournalBtn").onclick = () => modal.remove();
+    }
+
+    // B区 重要事项
+    function renderImportant() {
+        const now = new Date();
+        let incomplete = importantItems.filter(i => !i.completed).map(i => ({...i, _diff: Math.abs(new Date(`${i.date}T${i.time}`) - now)}));
+        incomplete.sort((a,b) => a._diff - b._diff);
+        let completed = importantItems.filter(i => i.completed);
+        let sortedAll = [...incomplete, ...completed];
+        const container = document.getElementById("importantList");
+        if(!container) return;
+        container.innerHTML = "";
+        sortedAll.forEach(item => {
+            let isCompleted = item.completed;
+            let isFirstActive = (!isCompleted && incomplete.length>0 && incomplete[0].id === item.id);
+            let div = document.createElement("div");
+            div.className = `imp-item ${isCompleted ? 'completed' : ''} ${!isCompleted && !isFirstActive ? 'green-imp' : ''} ${!isCompleted && isFirstActive ? 'red-imp' : ''}`;
+            div.innerHTML = `<input type="checkbox" class="imp-check" ${item.completed ? 'checked' : ''} data-id="${item.id}"><span class="imp-date">${item.date} ${item.time}</span><span class="imp-text">${escapeHtml(item.text)}</span><button class="imp-delete" data-id="${item.id}">🗑️</button>`;
+            container.appendChild(div);
+        });
+        document.querySelectorAll(".imp-check").forEach(cb => {
+            cb.addEventListener("change", (e) => {
+                e.stopPropagation();
+                let id = parseInt(e.target.dataset.id);
+                let targetItem = importantItems.find(i => i.id === id);
+                if(targetItem) {
+                    targetItem.completed = e.target.checked;
+                    saveAll();
+                    renderImportant();
+                    renderCalendar();
+                }
+            });
+        });
+        document.querySelectorAll(".imp-delete").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                let id = parseInt(btn.dataset.id);
+                importantItems = importantItems.filter(i => i.id !== id);
+                saveAll();
+                renderImportant();
+                renderCalendar();
+            });
+        });
+    }
+
+    // C区 ToDo
+    function renderTodo() {
+        todoItems.sort((a,b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
+        const container = document.getElementById("todoListContainer");
+        if(!container) return;
+        container.innerHTML = "";
+        if(todoItems.length === 0) container.innerHTML = "<div style='padding:24px; text-align:center;'>✨ 暂无待办，添加计划吧</div>";
+        todoItems.forEach(item => {
+            let div = document.createElement("div");
+            div.className = `todo-item ${item.completed ? 'completed-todo' : ''}`;
+            div.innerHTML = `<input type="checkbox" class="todo-check" ${item.completed ? 'checked' : ''} data-id="${item.id}"><span class="todo-time">${item.date} ${item.time}</span><span class="todo-text">${escapeHtml(item.text)}</span><button class="todo-upgrade" data-id="${item.id}">⭐升级关键待办</button><button class="todo-delete" data-id="${item.id}">删除</button>`;
+            container.appendChild(div);
+        });
+        document.querySelectorAll(".todo-check").forEach(cb => {
+            cb.addEventListener("change", (e) => {
+                let id = parseInt(e.target.dataset.id);
+                let t = todoItems.find(i => i.id === id);
+                if(t) t.completed = e.target.checked;
+                saveAll();
+                renderTodo();
+            });
+        });
+        document.querySelectorAll(".todo-delete").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                let id = parseInt(btn.dataset.id);
+                todoItems = todoItems.filter(i => i.id !== id);
+                saveAll();
+                renderTodo();
+            });
+        });
+        document.querySelectorAll(".todo-upgrade").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                let id = parseInt(btn.dataset.id);
+                let todo = todoItems.find(i => i.id === id);
+                if(todo) {
+                    importantItems.push({ id:Date.now(), date:todo.date, time:todo.time, text:todo.text, completed:false });
+                    todoItems = todoItems.filter(i => i.id !== id);
+                    saveAll();
+                    renderTodo();
+                    renderImportant();
+                    renderCalendar();
+                }
+            });
+        });
+    }
+
+    // D区 习惯打卡（与手账月历同步：传入年月）
+    function renderHabits(year = currentYear, month = currentMonth) {
+        const container = document.getElementById("habitsGrid");
+        if (!container) return;
+        container.innerHTML = "";
+        const daysInMonth = new Date(year, month, 0).getDate();
+
+        habits.forEach(habit => {
+            if (!habit.records) habit.records = {};
+            let monthCells = [];
+            for (let d = 1; d <= daysInMonth; d++) {
+                let dayStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                let currentCount = habit.records[dayStr] || 0;
+                let isCompleted = currentCount >= habit.dailyTarget;
+                monthCells.push({ day: d, completed: isCompleted, count: currentCount, dateStr: dayStr });
+            }
+            // 年统计：基于传入的年份
+            let yearCompletedDays = 0;
+            let startDate = new Date(year, 0, 1);
+            let endDate = new Date(year, 11, 31);
+            let totalDaysOfYear = 0;
+            for (let dt = new Date(startDate); dt <= endDate; dt.setDate(dt.getDate() + 1)) {
+                totalDaysOfYear++;
+                let ymd = formatYMD(dt);
+                let cnt = habit.records[ymd] || 0;
+                if (cnt >= habit.dailyTarget) yearCompletedDays++;
+            }
+            let yearRate = totalDaysOfYear > 0 ? ((yearCompletedDays / totalDaysOfYear) * 100).toFixed(1) : 0;
+            const today = todayStr();
+            let todayCount = habit.records[today] || 0;
+            let remaining = habit.dailyTarget - todayCount;
+            let progressText = `今日: ${todayCount}/${habit.dailyTarget} ${habit.unit}`;
+
+            const card = document.createElement("div");
+            card.className = "habit-card";
+            card.innerHTML = `
+                <div class="habit-header">
+                    <span class="habit-name">${escapeHtml(habit.name)}</span>
+                    <div class="habit-actions">
+                        <button class="icon-btn edit-habit" data-id="${habit.id}">✏️编辑</button>
+                        <button class="icon-btn delete-habit" data-id="${habit.id}">🗑️删除</button>
+                    </div>
+                </div>
+                <div class="habit-stats-row">
+                    <span>🎯 每日目标: ${habit.dailyTarget} ${habit.unit}</span>
+                    <span>⏰ ${habit.remindEnabled ? `提醒 ${habit.remindTime}` : "无提醒"}</span>
+                </div>
+                <div class="daily-progress">📅 ${progressText} ${remaining > 0 ? `(还需${remaining}${habit.unit})` : "✅ 已完成今日目标"}</div>
+                <div class="button-group">
+                    <button class="icon-btn checkin-btn" data-id="${habit.id}" style="background:#10b981; color:white;">✅ 打卡+1</button>
+                    <button class="icon-btn makeup-btn" data-id="${habit.id}" style="background:#f59e0b;">📅 补打卡</button>
+                </div>
+                <div style="font-size:0.7rem; margin: 4px 0; color:#4b5563;">📆 ${year}年${month}月 打卡统计</div>
+                <div class="month-stats-grid" id="month-grid-${habit.id}"></div>
+                <div class="year-progress">📊 ${year}年完成率: ${yearRate}% (${yearCompletedDays}/${totalDaysOfYear}天达标)</div>
+            `;
+            container.appendChild(card);
+            const monthGrid = card.querySelector(`#month-grid-${habit.id}`);
+            monthCells.forEach(cell => {
+                let cellDiv = document.createElement("div");
+                cellDiv.className = `stat-cell ${cell.completed ? 'checked' : ''}`;
+                cellDiv.innerText = cell.day;
+                cellDiv.title = `打卡${cell.count}/${habit.dailyTarget}${habit.unit}`;
+                monthGrid.appendChild(cellDiv);
+            });
+
+            card.querySelector(".checkin-btn").onclick = () => {
+                let todayCountNow = habit.records[today] || 0;
+                if (todayCountNow < habit.dailyTarget) {
+                    habit.records[today] = todayCountNow + 1;
+                    saveAll();
+                    renderHabits(year, month);
+                } else alert(`今日已完成 ${habit.dailyTarget} ${habit.unit}，无需再打卡！`);
+            };
+            card.querySelector(".makeup-btn").onclick = () => {
+                let datePick = prompt("请输入补打卡日期 (格式 YYYY-MM-DD):", today);
+                if (datePick && datePick.match(/\d{4}-\d{2}-\d{2}/)) {
+                    let cur = habit.records[datePick] || 0;
+                    if (cur < habit.dailyTarget) {
+                        habit.records[datePick] = cur + 1;
+                        saveAll();
+                        renderHabits(year, month);
+                        alert(`✅ 补打卡成功: ${datePick} +1 ${habit.unit}`);
+                    } else alert(`该日已完成目标 (${habit.dailyTarget}${habit.unit})，无需补卡。`);
+                } else alert("日期格式错误");
+            };
+            card.querySelector(".edit-habit").onclick = () => {
+                let newName = prompt("新习惯名称", habit.name);
+                let newTarget = parseInt(prompt("每日目标次数", habit.dailyTarget));
+                let newUnit = prompt("单位", habit.unit);
+                let remindEnable = confirm("是否开启提醒?");
+                let newRemind = habit.remindTime;
+                if (remindEnable) newRemind = prompt("提醒时间 (HH:MM)", habit.remindTime);
+                if (newName && newName.trim()) habit.name = newName.trim();
+                if (!isNaN(newTarget) && newTarget > 0) habit.dailyTarget = newTarget;
+                if (newUnit && newUnit.trim()) habit.unit = newUnit.trim();
+                habit.remindEnabled = remindEnable;
+                if (remindEnable) habit.remindTime = newRemind || "09:00";
+                saveAll();
+                renderHabits(year, month);
+            };
+            card.querySelector(".delete-habit").onclick = () => {
+                if (confirm(`确定删除习惯「${habit.name}」吗？`)) {
+                    habits = habits.filter(h => h.id !== habit.id);
+                    saveAll();
+                    renderHabits(year, month);
+                }
+            };
+        });
+        startReminder();
+    }
+
+    let reminderInterval = null;
+    function startReminder() {
+        if (reminderInterval) clearInterval(reminderInterval);
+        reminderInterval = setInterval(() => {
+            const now = new Date();
+            const nowTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            const today = todayStr();
+            habits.forEach(habit => {
+                if (habit.remindEnabled && habit.remindTime === nowTime) {
+                    let todayCnt = habit.records[today] || 0;
+                    if (todayCnt < habit.dailyTarget) {
+                        alert(`🔔 习惯提醒：${habit.name} 今日还需打卡 ${habit.dailyTarget - todayCnt} ${habit.unit}`);
+                    }
+                }
+            });
+        }, 60000);
+    }
+
+    // 天气功能
+    async function fetchWeather(city = "") {
+        const weatherDetailSpan = document.getElementById("weatherDetail");
+        const weatherDateSpan = document.getElementById("weatherDate");
+        if (!weatherDetailSpan) return;
+        weatherDetailSpan.innerText = "⏳ 查询中...";
+        let url = "https://wttr.in/";
+        if (city && city.trim() !== "") {
+            url += encodeURIComponent(city.trim()) + "?format=j1";
+        } else {
+            url += "?format=j1";
+        }
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data && data.current_condition && data.current_condition[0]) {
+                const condition = data.current_condition[0];
+                const temp = condition.temp_C;
+                const desc = condition.weatherDesc[0].value;
+                const humidity = condition.humidity;
+                const wind = condition.windspeedKmph;
+                weatherDetailSpan.innerHTML = `${desc} ${temp}°C   💧${humidity}%   🌬️${wind}km/h`;
+                const area = data.nearest_area?.[0]?.areaName?.[0]?.value || city || "自动定位";
+                weatherDateSpan.innerHTML = `📅 ${new Date().toLocaleDateString()}  ·  ${area}`;
+            } else {
+                weatherDetailSpan.innerText = "❌ 天气获取失败";
+            }
+        } catch (err) {
+            weatherDetailSpan.innerText = "⚠️ 网络或接口错误";
+            console.error(err);
+        }
+    }
+    function updateWeatherWithCity() {
+        const cityInput = document.getElementById("cityInput");
+        const city = cityInput ? cityInput.value : "";
+        fetchWeather(city);
+    }
+
+    // 主题切换
+    function setTheme(themeName) {
+        const hero = document.getElementById("heroCard");
+        if (!hero) return;
+        let gradient = "";
+        switch(themeName) {
+            case "orange": gradient = "linear-gradient(135deg, #ff9a3c 0%, #ff6b6b 100%)"; break;
+            case "pink": gradient = "linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)"; break;
+            case "grayblue": gradient = "linear-gradient(135deg, #2c3e50 0%, #3498db 100%)"; break;
+            case "mint": gradient = "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"; break;
+            case "purple": gradient = "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)"; break;
+            default: gradient = "linear-gradient(135deg, #ff9a3c 0%, #ff6b6b 100%)";
+        }
+        hero.style.background = gradient;
+        localStorage.setItem(STORAGE.theme, themeName);
+    }
+    function initTheme() {
+        const saved = localStorage.getItem(STORAGE.theme);
+        if (saved && ["orange","pink","grayblue","mint","purple"].includes(saved)) {
+            setTheme(saved);
+        } else {
+            setTheme("orange");
+        }
+        document.querySelectorAll(".theme-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const theme = btn.getAttribute("data-theme");
+                if (theme) setTheme(theme);
+            });
+        });
+    }
+
+    // 年月选择器
+    function initYearMonthSelect() {
+        const yearSelect = document.getElementById("yearSelect");
+        const monthSelect = document.getElementById("monthSelect");
+        const now = new Date();
+        for(let y=now.getFullYear()-3; y<=now.getFullYear()+3; y++) {
+            let opt = document.createElement("option");
+            opt.value = y; opt.innerText = y;
+            if(y === currentYear) opt.selected = true;
+            yearSelect.appendChild(opt);
+        }
+        for(let m=1; m<=12; m++) {
+            let opt = document.createElement("option");
+            opt.value = m; opt.innerText = `${m}月`;
+            if(m === currentMonth) opt.selected = true;
+            monthSelect.appendChild(opt);
+        }
+        yearSelect.addEventListener("change", () => { currentYear = parseInt(yearSelect.value); renderCalendar(); });
+        monthSelect.addEventListener("change", () => { currentMonth = parseInt(monthSelect.value); renderCalendar(); });
+        document.getElementById("todayBtn").onclick = () => {
+            const today = new Date();
+            currentYear = today.getFullYear();
+            currentMonth = today.getMonth()+1;
+            yearSelect.value = currentYear;
+            monthSelect.value = currentMonth;
+            renderCalendar();
+        };
+    }
+
+    // 导入导出
+    function exportAllData() {
+        const allData = {
+            importantItems, todoItems, habits,
+            journals: Object.keys(localStorage).filter(k => k.startsWith(STORAGE.journal)).reduce((obj, k) => {
+                obj[k] = localStorage.getItem(k);
+                return obj;
+            }, {})
+        };
+        const dataStr = JSON.stringify(allData, null, 2);
+        const blob = new Blob([dataStr], {type: "application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `handbackup_${formatYMD(new Date())}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        alert("数据已导出");
+    }
+    function importAllData(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const imported = JSON.parse(e.target.result);
+                if(imported.importantItems) importantItems = imported.importantItems;
+                if(imported.todoItems) todoItems = imported.todoItems;
+                if(imported.habits) habits = imported.habits;
+                if(imported.journals) {
+                    Object.keys(imported.journals).forEach(key => {
+                        localStorage.setItem(key, imported.journals[key]);
+                    });
+                }
+                saveAll();
+                renderCalendar();
+                renderImportant();
+                renderTodo();
+                alert("导入成功！");
+            } catch(err) { alert("文件解析失败"); }
+        };
+        reader.readAsText(file);
+    }
+
+    // 增删改
+    function addImportant() {
+        let date = document.getElementById("newImpDate").value;
+        let time = document.getElementById("newImpTime").value;
+        let text = document.getElementById("newImpText").value.trim();
+        if(!text) return alert("请输入事项内容");
+        importantItems.push({ id: Date.now(), date, time, text, completed: false });
+        saveAll();
+        renderImportant();
+        renderCalendar();
+        document.getElementById("newImpText").value = "";
+    }
+    function addTodo() {
+        let date = document.getElementById("newTodoDate").value;
+        let time = document.getElementById("newTodoTime").value;
+        let text = document.getElementById("newTodoText").value.trim();
+        if(!text) return alert("请输入计划事项");
+        todoItems.push({ id: Date.now(), date, time, text, completed: false });
+        saveAll();
+        renderTodo();
+        document.getElementById("newTodoText").value = "";
+    }
+    function addHabit() {
+        let name = document.getElementById("newHabitName").value.trim();
+        let dailyTarget = parseInt(document.getElementById("newDailyTarget").value);
+        let unit = document.getElementById("newUnit").value.trim() || "次";
+        let remindEnabled = document.getElementById("enableRemindCheckbox").checked;
+        let remindTime = document.getElementById("newRemindTime").value;
+        if(!name) return alert("请输入习惯名称");
+        if(isNaN(dailyTarget) || dailyTarget < 1) dailyTarget = 1;
+        habits.push({ id: Date.now(), name, dailyTarget, unit, remindEnabled, remindTime, records: {} });
+        saveAll();
+        renderHabits(currentYear, currentMonth);
+        document.getElementById("newHabitName").value = "";
+        document.getElementById("newDailyTarget").value = "1";
+    }
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+    // 初始化
+    function init() {
+        loadData();
+        const now = new Date();
+        currentYear = now.getFullYear();
+        currentMonth = now.getMonth()+1;
+        initYearMonthSelect();
+        renderCalendar();
+        renderImportant();
+        renderTodo();
+        updateWeatherWithCity();
+        document.getElementById("refreshWeatherBtn").onclick = updateWeatherWithCity;
+        initTheme();
+        document.getElementById("addImpBtn").onclick = addImportant;
+        document.getElementById("addTodoBtn").onclick = addTodo;
+        document.getElementById("addHabitBtn").onclick = addHabit;
+        document.getElementById("exportDataBtn").onclick = exportAllData;
+        document.getElementById("importDataBtn").onclick = () => document.getElementById("importFileInput").click();
+        document.getElementById("importFileInput").onchange = (e) => { if(e.target.files[0]) importAllData(e.target.files[0]); e.target.value = ''; };
+    }
+    init();
+</script>
+</body>
+</html>
