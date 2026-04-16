@@ -70,6 +70,7 @@
         .calendar-area {
             flex: 1.3;
             min-width: 280px;
+            overflow-x: auto;  /* 极端窄屏时允许横向滚动，保证内容完整 */
         }
 
         .important-area {
@@ -124,11 +125,14 @@
             cursor: pointer;
             font-weight: 600;
         }
+
+        /* 日历网格 - 关键修复：防止溢出，均分宽度 */
         .calendar-grid {
             display: grid;
-            grid-template-columns: repeat(7, 1fr);
+            grid-template-columns: repeat(7, minmax(0, 1fr));
             gap: 8px;
             margin-top: 12px;
+            width: 100%;
         }
         .weekday {
             text-align: center;
@@ -148,6 +152,8 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: flex-start;
+            min-width: 0;   /* 防止内容撑开 */
         }
         .cal-day:hover {
             background: #eef2ff;
@@ -278,6 +284,10 @@
         .green-imp {
             background: #e6f7ec;
             border-left: 5px solid #10b981;
+        }
+        .purple-imp {
+            background: #f3e8ff;
+            border-left: 5px solid #a855f7;
         }
 
         /* C区 TODO 强化 */
@@ -524,7 +534,7 @@
         }
         .theme-btn:hover { transform: scale(1.1); }
 
-        /* 手机适配 */
+        /* ========= 手机与窄屏适配增强 ========= */
         @media (max-width: 700px) {
             body { padding: 16px 12px; }
             .card { padding: 16px 18px; }
@@ -532,12 +542,15 @@
             .hero-title { font-size: 1.3rem; }
             .hero-sub { font-size: 0.7rem; }
             .section-title { font-size: 1.2rem; margin-bottom: 12px; }
+            
+            /* 日历网格在手机端缩小间距和元素尺寸 */
             .calendar-grid { gap: 4px; }
-            .cal-day { padding: 2px; }
+            .cal-day { padding: 4px 2px; }
             .day-number { width: 28px; height: 28px; font-size: 0.75rem; }
             .red-circle-badge { width: 18px; height: 18px; margin-top: 2px; }
             .badge-placeholder { height: 18px; }
             .weekday { font-size: 0.7rem; }
+            
             .habits-grid { grid-template-columns: 1fr; gap: 16px; }
             .todo-item { flex-wrap: wrap; }
             .todo-time { min-width: auto; }
@@ -545,15 +558,31 @@
             .export-import, .theme-buttons { justify-content: center; }
             .weather-main { flex-direction: column; align-items: flex-start; gap: 6px; }
         }
+        
+        /* 针对超窄设备（宽度 < 480px）进一步优化日历格子 */
         @media (max-width: 480px) {
             .month-year-selector select { padding: 4px 8px; font-size: 0.75rem; }
             .btn-icon { padding: 4px 12px; font-size: 0.7rem; }
+            .calendar-grid { gap: 3px; }
+            .day-number { width: 24px; height: 24px; font-size: 0.7rem; }
+            .red-circle-badge { width: 14px; height: 14px; }
+            .badge-placeholder { height: 14px; }
+            .cal-day { border-radius: 14px; padding: 2px 1px; }
+            .weekday { font-size: 0.65rem; }
+        }
+        
+        /* 确保日历区域在容器内不溢出，极端情况可滚动 */
+        .calendar-area {
+            overflow-x: auto;
+        }
+        .calendar-grid {
+            min-width: 280px;  /* 保证可读性，若父容器不够则滚动 */
         }
     </style>
 </head>
 <body>
 <div class="handbook-container">
-    <!-- 顶部标题卡片（已修复闭合标签） -->
+    <!-- 顶部标题卡片 -->
     <div class="hero-card" id="heroCard">
         <div class="hero-title">
             手账丨Twolobster
@@ -575,7 +604,7 @@
                 <button id="todayBtn" class="btn-icon">📌 今日</button>
             </div>
             <div class="calendar-grid" id="calendarGrid"></div>
-            <div style="font-size:12px; margin-top:14px; display:flex; gap:20px;">
+            <div style="font-size:12px; margin-top:14px; display:flex; gap:20px; flex-wrap:wrap;">
                 <span>🔴 红点 = 含关键日程</span>
                 <span>🔵 蓝底数字 = 含当日标注</span>
             </div>
@@ -740,7 +769,6 @@
             dayDiv.addEventListener("click", (e) => { e.stopPropagation(); openJournalModal(dateStr); });
             grid.appendChild(dayDiv);
         }
-        // 同步习惯打卡区：使用当前年月
         renderHabits(currentYear, currentMonth);
     }
 
@@ -763,24 +791,44 @@
     // B区 重要事项
     function renderImportant() {
         const now = new Date();
-        let incomplete = importantItems.filter(i => !i.completed).map(i => ({...i, _diff: Math.abs(new Date(`${i.date}T${i.time}`) - now)}));
-        incomplete.sort((a,b) => a._diff - b._diff);
+        let incomplete = importantItems.filter(i => !i.completed);
         let completed = importantItems.filter(i => i.completed);
+        
+        // 新排序：未完成按时间升序，已完成保持原序
+        incomplete.sort((a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
         let sortedAll = [...incomplete, ...completed];
+        
+        // 找出未过时的未完成事项中最紧急的一个（红色标记用）
+        let notExpiredIncomplete = incomplete.filter(item => new Date(`${item.date}T${item.time}`) >= now);
+        let mostUrgentId = null;
+        if (notExpiredIncomplete.length) {
+            let minDiff = Infinity;
+            notExpiredIncomplete.forEach(item => {
+                let diff = Math.abs(new Date(`${item.date}T${item.time}`) - now);
+                if (diff < minDiff) { minDiff = diff; mostUrgentId = item.id; }
+            });
+        }
+        
         const container = document.getElementById("importantList");
         if(!container) return;
         container.innerHTML = "";
         sortedAll.forEach(item => {
             let isCompleted = item.completed;
-            let isFirstActive = (!isCompleted && incomplete.length>0 && incomplete[0].id === item.id);
+            let itemDateTime = new Date(`${item.date}T${item.time}`);
+            let isExpired = (itemDateTime < now) && !isCompleted;
+            let additionalClass = "";
+            if (isCompleted) additionalClass = "completed";
+            else if (isExpired) additionalClass = "purple-imp";
+            else additionalClass = (mostUrgentId === item.id) ? "red-imp" : "green-imp";
+            
             let div = document.createElement("div");
-            div.className = `imp-item ${isCompleted ? 'completed' : ''} ${!isCompleted && !isFirstActive ? 'green-imp' : ''} ${!isCompleted && isFirstActive ? 'red-imp' : ''}`;
+            div.className = `imp-item ${additionalClass}`;
             div.innerHTML = `<input type="checkbox" class="imp-check" ${item.completed ? 'checked' : ''} data-id="${item.id}"><span class="imp-date">${item.date} ${item.time}</span><span class="imp-text">${escapeHtml(item.text)}</span><button class="imp-delete" data-id="${item.id}">🗑️</button>`;
             container.appendChild(div);
         });
+        
         document.querySelectorAll(".imp-check").forEach(cb => {
             cb.addEventListener("change", (e) => {
-                e.stopPropagation();
                 let id = parseInt(e.target.dataset.id);
                 let targetItem = importantItems.find(i => i.id === id);
                 if(targetItem) {
@@ -794,10 +842,13 @@
         document.querySelectorAll(".imp-delete").forEach(btn => {
             btn.addEventListener("click", (e) => {
                 let id = parseInt(btn.dataset.id);
-                importantItems = importantItems.filter(i => i.id !== id);
-                saveAll();
-                renderImportant();
-                renderCalendar();
+                let targetItem = importantItems.find(i => i.id === id);
+                if (targetItem && confirm(`确定删除事项“${targetItem.text}”吗？`)) {
+                    importantItems = importantItems.filter(i => i.id !== id);
+                    saveAll();
+                    renderImportant();
+                    renderCalendar();
+                }
             });
         });
     }
@@ -827,9 +878,12 @@
         document.querySelectorAll(".todo-delete").forEach(btn => {
             btn.addEventListener("click", (e) => {
                 let id = parseInt(btn.dataset.id);
-                todoItems = todoItems.filter(i => i.id !== id);
-                saveAll();
-                renderTodo();
+                let targetTodo = todoItems.find(i => i.id === id);
+                if (targetTodo && confirm(`确定删除待办“${targetTodo.text}”吗？`)) {
+                    todoItems = todoItems.filter(i => i.id !== id);
+                    saveAll();
+                    renderTodo();
+                }
             });
         });
         document.querySelectorAll(".todo-upgrade").forEach(btn => {
@@ -848,7 +902,7 @@
         });
     }
 
-    // D区 习惯打卡（与手账月历同步：传入年月）
+    // D区 习惯打卡
     function renderHabits(year = currentYear, month = currentMonth) {
         const container = document.getElementById("habitsGrid");
         if (!container) return;
@@ -864,7 +918,6 @@
                 let isCompleted = currentCount >= habit.dailyTarget;
                 monthCells.push({ day: d, completed: isCompleted, count: currentCount, dateStr: dayStr });
             }
-            // 年统计：基于传入的年份
             let yearCompletedDays = 0;
             let startDate = new Date(year, 0, 1);
             let endDate = new Date(year, 11, 31);
