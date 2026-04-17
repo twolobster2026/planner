@@ -70,7 +70,7 @@
         .calendar-area {
             flex: 1.3;
             min-width: 280px;
-            overflow-x: auto;  /* 极端窄屏时允许横向滚动，保证内容完整 */
+            overflow-x: auto;
         }
 
         .important-area {
@@ -126,7 +126,7 @@
             font-weight: 600;
         }
 
-        /* 日历网格 - 关键修复：防止溢出，均分宽度 */
+        /* 日历网格 */
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -153,7 +153,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            min-width: 0;   /* 防止内容撑开 */
+            min-width: 0;
         }
         .cal-day:hover {
             background: #eef2ff;
@@ -184,6 +184,37 @@
         }
         .badge-placeholder {
             height: 24px;
+        }
+
+        /* 今日格子高亮 - 默认主题（橙色） */
+        .cal-day.today {
+            background: #fff7e5;
+            border: 2px solid #ff9a3c;
+            box-shadow: 0 2px 8px rgba(255,154,60,0.2);
+        }
+        /* 粉色主题 */
+        .theme-pink .cal-day.today {
+            background: #fff0f5;
+            border-color: #ff9a9e;
+            box-shadow: 0 2px 8px rgba(255,154,158,0.2);
+        }
+        /* 灰蓝主题 */
+        .theme-grayblue .cal-day.today {
+            background: #eef5ff;
+            border-color: #3498db;
+            box-shadow: 0 2px 8px rgba(52,152,219,0.2);
+        }
+        /* 薄荷主题 */
+        .theme-mint .cal-day.today {
+            background: #e0f7ea;
+            border-color: #11998e;
+            box-shadow: 0 2px 8px rgba(17,153,142,0.2);
+        }
+        /* 紫色主题 */
+        .theme-purple .cal-day.today {
+            background: #f9f0ff;
+            border-color: #a18cd1;
+            box-shadow: 0 2px 8px rgba(161,140,209,0.2);
         }
 
         /* B区 重要事项 & 天气 */
@@ -353,7 +384,7 @@
             cursor: pointer;
         }
 
-        /* D区 习惯打卡 - 3列网格，手机适配 */
+        /* D区 习惯打卡 */
         .habits-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -534,7 +565,7 @@
         }
         .theme-btn:hover { transform: scale(1.1); }
 
-        /* ========= 手机与窄屏适配增强 ========= */
+        /* 响应式适配 */
         @media (max-width: 700px) {
             body { padding: 16px 12px; }
             .card { padding: 16px 18px; }
@@ -542,15 +573,12 @@
             .hero-title { font-size: 1.3rem; }
             .hero-sub { font-size: 0.7rem; }
             .section-title { font-size: 1.2rem; margin-bottom: 12px; }
-            
-            /* 日历网格在手机端缩小间距和元素尺寸 */
             .calendar-grid { gap: 4px; }
             .cal-day { padding: 4px 2px; }
             .day-number { width: 28px; height: 28px; font-size: 0.75rem; }
             .red-circle-badge { width: 18px; height: 18px; margin-top: 2px; }
             .badge-placeholder { height: 18px; }
             .weekday { font-size: 0.7rem; }
-            
             .habits-grid { grid-template-columns: 1fr; gap: 16px; }
             .todo-item { flex-wrap: wrap; }
             .todo-time { min-width: auto; }
@@ -558,8 +586,6 @@
             .export-import, .theme-buttons { justify-content: center; }
             .weather-main { flex-direction: column; align-items: flex-start; gap: 6px; }
         }
-        
-        /* 针对超窄设备（宽度 < 480px）进一步优化日历格子 */
         @media (max-width: 480px) {
             .month-year-selector select { padding: 4px 8px; font-size: 0.75rem; }
             .btn-icon { padding: 4px 12px; font-size: 0.7rem; }
@@ -570,19 +596,16 @@
             .cal-day { border-radius: 14px; padding: 2px 1px; }
             .weekday { font-size: 0.65rem; }
         }
-        
-        /* 确保日历区域在容器内不溢出，极端情况可滚动 */
         .calendar-area {
             overflow-x: auto;
         }
         .calendar-grid {
-            min-width: 280px;  /* 保证可读性，若父容器不够则滚动 */
+            min-width: 280px;
         }
     </style>
 </head>
 <body>
 <div class="handbook-container">
-    <!-- 顶部标题卡片 -->
     <div class="hero-card" id="heroCard">
         <div class="hero-title">
             手账丨Twolobster
@@ -591,9 +614,7 @@
         <div class="hero-sub">智能日程 | 习惯追踪 | 实时天气</div>
     </div>
 
-    <!-- AB 并列 -->
     <div class="row-ab">
-        <!-- A区 日历 -->
         <div class="card calendar-area">
             <div class="section-title">📅 手账月历</div>
             <div class="calendar-header">
@@ -605,12 +626,11 @@
             </div>
             <div class="calendar-grid" id="calendarGrid"></div>
             <div style="font-size:12px; margin-top:14px; display:flex; gap:20px; flex-wrap:wrap;">
-                <span>🔴 红点 = 含关键日程</span>
+                <span>🔴 红点 = 含未完成的关键日程</span>
                 <span>🔵 蓝底数字 = 含当日标注</span>
             </div>
         </div>
 
-        <!-- B区 重要事项（含真实天气） -->
         <div class="card important-area">
             <div class="section-title">⭐ 待办关键日程</div>
             <div class="weather-info" id="weatherPanel">
@@ -633,7 +653,6 @@
         </div>
     </div>
 
-    <!-- C区 To Do List -->
     <div class="card todo-area">
         <div class="section-title">✅ To Do List</div>
         <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:8px;">
@@ -645,7 +664,6 @@
         <div class="todo-list" id="todoListContainer"></div>
     </div>
 
-    <!-- D区 习惯打卡 -->
     <div class="card habit-area">
         <div class="section-title">🏆 习惯打卡</div>
         <div id="habitsGrid" class="habits-grid"></div>
@@ -660,7 +678,6 @@
         <p style="font-size:12px; margin-top:14px; color:#4b5563;">💡 打卡说明：每日点击“打卡+1”增加计数，达标后当天格子变绿；可补打卡任意日期；年进度自动统计。</p>
     </div>
 
-    <!-- 底部：导出导入 + 主题切换 + 版权 -->
     <div class="footer-toolbar">
         <div class="copyright">© Twolobster丨2026 手账 · 专注效率 | 数据本地存储</div>
         <div class="theme-buttons">
@@ -689,13 +706,11 @@
         theme: "handbook_theme"
     };
 
-    // 全局数据
     let importantItems = [];
     let todoItems = [];
     let habits = [];
     let currentYear = 2026, currentMonth = 4;
 
-    // ---------- 辅助函数 ----------
     function formatYMD(date) {
         let y = date.getFullYear();
         let m = String(date.getMonth() + 1).padStart(2, '0');
@@ -730,16 +745,15 @@
         saveAll();
     }
 
-    // 手账检测
     function hasJournalOnDate(dateStr) {
         let content = localStorage.getItem(STORAGE.journal + dateStr);
         return content && content.trim().length > 0;
     }
+    // 红点只显示【未完成】的重要事项
     function hasImportantOnDate(dateStr) {
-        return importantItems.some(i => i.date === dateStr);
+        return importantItems.some(i => i.date === dateStr && !i.completed);
     }
 
-    // 渲染A区日历
     function renderCalendar() {
         const firstDay = new Date(currentYear, currentMonth-1, 1);
         const startWeekday = firstDay.getDay();
@@ -749,6 +763,8 @@
         const weekdays = ["日","一","二","三","四","五","六"];
         weekdays.forEach(d => { let dw = document.createElement("div"); dw.className="weekday"; dw.innerText=d; grid.appendChild(dw); });
         for(let i=0; i<startWeekday; i++) { let empty = document.createElement("div"); empty.className="cal-day"; empty.style.background="transparent"; empty.style.border="none"; grid.appendChild(empty); }
+        
+        const today = new Date();
         for(let d=1; d<=daysInMonth; d++) {
             let dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
             let hasImportant = hasImportantOnDate(dateStr);
@@ -759,6 +775,11 @@
             numSpan.className = `day-number ${hasJournal ? 'has-journal' : ''}`;
             numSpan.innerText = d;
             dayDiv.appendChild(numSpan);
+            
+            if (currentYear === today.getFullYear() && currentMonth === today.getMonth() + 1 && d === today.getDate()) {
+                dayDiv.classList.add('today');
+            }
+            
             if(hasImportant) {
                 let redCircle = document.createElement("div");
                 redCircle.className = "red-circle-badge";
@@ -788,17 +809,13 @@
         modal.querySelector("#closeJournalBtn").onclick = () => modal.remove();
     }
 
-    // B区 重要事项
     function renderImportant() {
         const now = new Date();
         let incomplete = importantItems.filter(i => !i.completed);
         let completed = importantItems.filter(i => i.completed);
-        
-        // 新排序：未完成按时间升序，已完成保持原序
         incomplete.sort((a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
         let sortedAll = [...incomplete, ...completed];
         
-        // 找出未过时的未完成事项中最紧急的一个（红色标记用）
         let notExpiredIncomplete = incomplete.filter(item => new Date(`${item.date}T${item.time}`) >= now);
         let mostUrgentId = null;
         if (notExpiredIncomplete.length) {
@@ -853,7 +870,6 @@
         });
     }
 
-    // C区 ToDo
     function renderTodo() {
         todoItems.sort((a,b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
         const container = document.getElementById("todoListContainer");
@@ -902,7 +918,6 @@
         });
     }
 
-    // D区 习惯打卡
     function renderHabits(year = currentYear, month = currentMonth) {
         const container = document.getElementById("habitsGrid");
         if (!container) return;
@@ -1031,7 +1046,6 @@
         }, 60000);
     }
 
-    // 天气功能
     async function fetchWeather(city = "") {
         const weatherDetailSpan = document.getElementById("weatherDetail");
         const weatherDateSpan = document.getElementById("weatherDate");
@@ -1069,7 +1083,6 @@
         fetchWeather(city);
     }
 
-    // 主题切换
     function setTheme(themeName) {
         const hero = document.getElementById("heroCard");
         if (!hero) return;
@@ -1083,6 +1096,10 @@
             default: gradient = "linear-gradient(135deg, #ff9a3c 0%, #ff6b6b 100%)";
         }
         hero.style.background = gradient;
+        const body = document.body;
+        const themes = ["orange", "pink", "grayblue", "mint", "purple"];
+        themes.forEach(t => body.classList.remove(`theme-${t}`));
+        body.classList.add(`theme-${themeName}`);
         localStorage.setItem(STORAGE.theme, themeName);
     }
     function initTheme() {
@@ -1100,7 +1117,6 @@
         });
     }
 
-    // 年月选择器
     function initYearMonthSelect() {
         const yearSelect = document.getElementById("yearSelect");
         const monthSelect = document.getElementById("monthSelect");
@@ -1129,7 +1145,6 @@
         };
     }
 
-    // 导入导出
     function exportAllData() {
         const allData = {
             importantItems, todoItems, habits,
@@ -1171,7 +1186,6 @@
         reader.readAsText(file);
     }
 
-    // 增删改
     function addImportant() {
         let date = document.getElementById("newImpDate").value;
         let time = document.getElementById("newImpTime").value;
@@ -1209,7 +1223,6 @@
     }
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
 
-    // 初始化
     function init() {
         loadData();
         const now = new Date();
@@ -1228,6 +1241,16 @@
         document.getElementById("exportDataBtn").onclick = exportAllData;
         document.getElementById("importDataBtn").onclick = () => document.getElementById("importFileInput").click();
         document.getElementById("importFileInput").onchange = (e) => { if(e.target.files[0]) importAllData(e.target.files[0]); e.target.value = ''; };
+        
+        // 自动刷新重要事项（每分钟）
+        setInterval(() => {
+            renderImportant();
+        }, 60000);
+        
+        // 自动刷新天气（每10分钟）
+        setInterval(() => {
+            updateWeatherWithCity();
+        }, 600000);
     }
     init();
 </script>
