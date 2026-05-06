@@ -645,7 +645,7 @@
             </div>
             <div class="important-list" id="importantList"></div>
             <div style="display:flex; gap:10px; margin-top:20px; flex-wrap:wrap;">
-                <input type="date" id="newImpDate" value="2026-04-03">
+               <input type="date" id="newImpDate">
                 <input type="time" id="newImpTime" value="14:00">
                 <input type="text" id="newImpText" placeholder="重要事项..." style="flex:2;">
                 <button id="addImpBtn" class="btn-primary">+ 添加</button>
@@ -656,7 +656,7 @@
     <div class="card todo-area">
         <div class="section-title">✅ To Do List</div>
         <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:8px;">
-            <input type="date" id="newTodoDate" value="2026-04-03">
+            <input type="date" id="newTodoDate">
             <input type="time" id="newTodoTime" value="10:00">
             <input type="text" id="newTodoText" placeholder="计划事项 " style="flex:2;">
             <button id="addTodoBtn" class="btn-primary">+ 添加</button>
@@ -674,6 +674,22 @@
             <label style="display:flex; align-items:center; gap:5px;"><input type="checkbox" id="enableRemindCheckbox"> 提醒</label>
             <input type="time" id="newRemindTime" value="09:00" style="width:100px;">
             <button id="addHabitBtn" class="btn-primary">➕ 创建习惯</button>
+        </div>
+        <!-- 习惯打卡查询面板 -->
+        <div class="habit-query-panel" style="margin-top: 24px; background: #f8fafc; border-radius: 32px; padding: 20px 24px;">
+            <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 16px;">🔍 查询打卡记录</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+                <select id="queryHabitSelect" style="flex: 1; min-width: 150px;">
+                    <option value="">-- 请选择习惯 --</option>
+                </select>
+                <input type="date" id="queryStartDate" value="">
+                <span>至</span>
+                <input type="date" id="queryEndDate" value="">
+                <button id="queryHabitBtn" class="btn-primary">🔎 查询</button>
+            </div>
+            <div id="queryResultContainer" style="margin-top: 18px; max-height: 300px; overflow-y: auto; background: white; border-radius: 24px; padding: 12px;">
+                <div style="text-align: center; color: #94a3b8; padding: 18px;">📋 选择习惯和日期范围后点击查询</div>
+            </div>
         </div>
         <p style="font-size:12px; margin-top:14px; color:#4b5563;">💡 打卡说明：每日点击“打卡+1”增加计数，达标后当天格子变绿；可补打卡任意日期；年进度自动统计。</p>
     </div>
@@ -1025,8 +1041,90 @@
                 }
             };
         });
+    populateHabitSelect(); // 更新查询下拉框
         startReminder();
     }
+
+// 更新查询面板中的习惯下拉框
+function populateHabitSelect() {
+    const select = document.getElementById("queryHabitSelect");
+    if (!select) return;
+    // 保留第一个提示选项
+    select.innerHTML = '<option value="">-- 请选择习惯 --</option>';
+    habits.forEach(habit => {
+        const option = document.createElement("option");
+        option.value = habit.id;
+        option.textContent = `${habit.name} (${habit.dailyTarget}${habit.unit}/天)`;
+        select.appendChild(option);
+    });
+}
+
+// 查询习惯打卡记录
+function queryHabitRecords() {
+    const habitId = parseInt(document.getElementById("queryHabitSelect").value);
+    const startDate = document.getElementById("queryStartDate").value;
+    const endDate = document.getElementById("queryEndDate").value;
+    const resultContainer = document.getElementById("queryResultContainer");
+    
+    if (!habitId) {
+        resultContainer.innerHTML = '<div style="text-align: center; color: #ef4444; padding: 18px;">⚠️ 请先选择一个习惯</div>';
+        return;
+    }
+    if (!startDate || !endDate) {
+        resultContainer.innerHTML = '<div style="text-align: center; color: #ef4444; padding: 18px;">⚠️ 请选择起始和结束日期</div>';
+        return;
+    }
+    if (startDate > endDate) {
+        resultContainer.innerHTML = '<div style="text-align: center; color: #ef4444; padding: 18px;">⚠️ 起始日期不能晚于结束日期</div>';
+        return;
+    }
+    
+    const habit = habits.find(h => h.id === habitId);
+    if (!habit) {
+        resultContainer.innerHTML = '<div style="text-align: center; color: #ef4444; padding: 18px;">⚠️ 习惯不存在</div>';
+        return;
+    }
+    
+    // 生成日期范围内的所有日期
+    const dateList = [];
+    let current = new Date(startDate);
+    const end = new Date(endDate);
+    while (current <= end) {
+        dateList.push(formatYMD(current));
+        current.setDate(current.getDate() + 1);
+    }
+    
+    let totalCount = 0;
+    let totalDays = dateList.length;
+    let completedDays = 0;
+    let rowsHtml = "";
+    
+    dateList.forEach(dateStr => {
+        let count = habit.records[dateStr] || 0;
+        totalCount += count;
+        let isCompleted = count >= habit.dailyTarget;
+        if (isCompleted) completedDays++;
+        let statusIcon = isCompleted ? "✅" : (count > 0 ? "🟡" : "⭕");
+        let countText = `${count}/${habit.dailyTarget} ${habit.unit}`;
+        rowsHtml += `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem;">
+                <span>${statusIcon} ${dateStr}</span>
+                <span style="font-weight: 600;">${countText}</span>
+            </div>
+        `;
+    });
+    
+    const completionRate = totalDays > 0 ? ((completedDays / totalDays) * 100).toFixed(1) : 0;
+    const summary = `
+        <div style="background: #eef2ff; border-radius: 24px; padding: 12px 16px; margin-bottom: 14px; display: flex; flex-wrap: wrap; gap: 10px; font-weight: 600;">
+            <span>📊 总打卡次数: ${totalCount} ${habit.unit}</span>
+            <span>📅 天数: ${totalDays} 天</span>
+            <span>🏆 达标天数: ${completedDays} 天 (${completionRate}%)</span>
+        </div>
+    `;
+    
+    resultContainer.innerHTML = summary + (rowsHtml || '<div style="text-align:center; color:#94a3b8;">暂无记录</div>');
+}
 
     let reminderInterval = null;
     function startReminder() {
@@ -1233,11 +1331,25 @@
         renderImportant();
         renderTodo();
         updateWeatherWithCity();
+        document.getElementById("newImpDate").value = todayStr();
+        document.getElementById("newTodoDate").value = todayStr();
         document.getElementById("refreshWeatherBtn").onclick = updateWeatherWithCity;
         initTheme();
         document.getElementById("addImpBtn").onclick = addImportant;
         document.getElementById("addTodoBtn").onclick = addTodo;
         document.getElementById("addHabitBtn").onclick = addHabit;
+
+    // 查询打卡记录按钮事件
+    const queryBtn = document.getElementById("queryHabitBtn");
+    if (queryBtn) {
+        queryBtn.onclick = queryHabitRecords;
+    }
+    // 设置查询日期默认值为今天
+    const queryStart = document.getElementById("queryStartDate");
+    const queryEnd = document.getElementById("queryEndDate");
+    if (queryStart) queryStart.value = todayStr();
+    if (queryEnd) queryEnd.value = todayStr();
+
         document.getElementById("exportDataBtn").onclick = exportAllData;
         document.getElementById("importDataBtn").onclick = () => document.getElementById("importFileInput").click();
         document.getElementById("importFileInput").onchange = (e) => { if(e.target.files[0]) importAllData(e.target.files[0]); e.target.value = ''; };
